@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu Galería — Fotografía</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="logo" href="index.html">TU GALERÍA</a>
+    <a class="nav-link" href="#freestyle">Freestyle ↗</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">FOTOGRAFÍA · 2026</p>
+        <h1>Algunas<br><em>que muestro.</em></h1>
+        <p class="intro">
+          mis fotos
+        </p>
+        <a class="button" href="#freestyle">Entrar a Freestyle ↓</a>
+      </div>
+
+      <div class="hero-image">
+        <div class="hero-carousel" aria-label="Carrusel automático de fotos de Freestyle">
+          <div class="hero-track">
+            <img class="hero-slide" src="fotos/DSC_0605.jpg" alt="Foto de Freestyle 1">
+            <img class="hero-slide" src="fotos/DSC_1046.jpg" alt="Foto de Freestyle 2">
+            <img class="hero-slide" src="fotos/DSC_0233.jpg" alt="Foto de Freestyle 3">
+            <img class="hero-slide" src="fotos/DSC_0383.jpg" alt="Foto de Freestyle 4">
+            <img class="hero-slide" src="fotos/DSC_0934.jpg" alt="Foto de Freestyle 5">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery-section" id="freestyle">
+      <div class="section-heading">
+        <p class="eyebrow">01 — COLECCIÓN</p>
+        <h2>Freestyle</h2>
+      </div>
+
+      <div class="carousel" aria-label="Carrusel de fotos de Freestyle">
+        <button class="carousel-button previous" type="button" aria-label="Foto anterior">←</button>
+        <div class="gallery">
+          <div class="gallery-track">
+            <article class="photo-card">
+              <img class="photo-placeholder" src="fotos/DSC_1046.jpg" alt="Evento y retrato">
+              <div class="caption"><span>01</span><span>Freestyle</span></div>
+            </article>
+
+            <article class="photo-card">
+              <img class="photo-placeholder" src="fotos/DSC_0233.jpg" alt="Calle">
+              <div class="caption"><span>02</span><span>Freestyle</span></div>
+            </article>
+
+            <article class="photo-card">
+              <img class="photo-placeholder" src="fotos/DSC_0383.jpg" alt="Freestyle">
+              <div class="caption"><span>03</span><span>Freestyle</span></div>
+            </article>
+
+            <article class="photo-card">
+              <img class="photo-placeholder" src="fotos/DSC_0934.jpg" alt="Evento">
+              <div class="caption"><span>04</span><span>Freestyle</span></div>
+            </article>
+          </div>
+        </div>
+        <button class="carousel-button next" type="button" aria-label="Foto siguiente">→</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Tu Galería</span>
+    <span>Fotografía</span>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
