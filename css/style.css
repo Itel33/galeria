@@ -4,16 +4,31 @@
 
 html { scroll-behavior: smooth; }
 
+body::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  content: "";
+  background-image: linear-gradient(rgba(17, 17, 17, .68), rgba(17, 17, 17, .88)), var(--category-background);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: saturate(.75);
+  pointer-events: none;
+}
+
 body {
   position: relative;
   background: #111;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background-image: none !important;
   color: #f4f3ef;
   font-family: Inter, Arial, sans-serif;
   font-size: 14px;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 .nav {
@@ -267,8 +282,7 @@ footer {
 
 @media (max-width: 700px) {
   body {
-    background-attachment: scroll;
-    background-position: center top;
+    background-image: none !important;
   }
 
   .nav { height: 65px; }

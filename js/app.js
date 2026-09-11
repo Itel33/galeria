@@ -45,11 +45,14 @@ nextButton.addEventListener("click", () => showPhoto(currentPhoto + 1));
 function renderCategory(categoryKey) {
 	const category = categories[categoryKey];
 	currentCategory = categoryKey;
+	const backgroundUrl = new URL(
+		`fotos/${category.folder}/${category.photos[0]}`,
+		document.baseURI
+	).href;
 	document.body.style.setProperty(
 		"--category-background",
-		`url("fotos/${category.folder}/${category.photos[0]}")`
+		`url("${backgroundUrl}")`
 	);
-	document.body.style.backgroundImage = `linear-gradient(rgba(17, 17, 17, .68), rgba(17, 17, 17, .88)), url("fotos/${category.folder}/${category.photos[0]}")`;
 	categoryTitle.textContent = category.name;
 	categoryButtons.forEach((button) => {
 		button.classList.toggle("active", button.dataset.category === categoryKey);
