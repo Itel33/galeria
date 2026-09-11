@@ -3,7 +3,6 @@ const previousButton = document.querySelector(".previous");
 const nextButton = document.querySelector(".next");
 const heroCarousel = document.querySelector(".hero-carousel");
 const heroTrack = document.querySelector(".hero-track");
-const visibleHeroSlides = 3;
 const categoryTitle = document.querySelector(".category-title");
 const categoryButtons = document.querySelectorAll(".category-button");
 const categories = {
@@ -18,9 +17,11 @@ const categories = {
 		photos: ["DSC_0044-2.jpg", "DSC_0875.jpg", "DSC_0951.jpg", "DSC_1061.jpg", "DSC_1290.jpg", "DSC_1386.jpg", "DSC_1590.jpg", "DSC_1633.jpg"]
 	}
 };
+const produHorizontalPhotos = new Set(["DSC_0044-2.jpg", "DSC_1061.jpg", "DSC_1290.jpg", "DSC_1386.jpg"]);
 let currentPhoto = 0;
 let currentHeroSlide = 0;
 let currentCategory = "freestyle";
+let heroGroups = [];
 
 function showPhoto(index) {
 	const totalPhotos = categories[currentCategory].photos.length;
@@ -35,18 +36,22 @@ nextButton.addEventListener("click", () => showPhoto(currentPhoto + 1));
 function renderCategory(categoryKey) {
 	const category = categories[categoryKey];
 	currentCategory = categoryKey;
+	document.body.style.setProperty(
+		"--category-background",
+		`url("fotos/${category.folder}/${category.photos[0]}")`
+	);
+	document.body.style.backgroundImage = `linear-gradient(rgba(17, 17, 17, .68), rgba(17, 17, 17, .88)), url("fotos/${category.folder}/${category.photos[0]}")`;
 	categoryTitle.textContent = category.name;
 	categoryButtons.forEach((button) => {
 		button.classList.toggle("active", button.dataset.category === categoryKey);
 	});
 
 	const imagePath = (fileName) => `fotos/${category.folder}/${fileName}`;
-	heroTrack.innerHTML = category.photos.map((fileName, index) =>
-		`<img class="hero-slide" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}">`
-	).join("");
-	category.photos.slice(0, visibleHeroSlides).forEach((fileName, index) => {
-		heroTrack.insertAdjacentHTML("beforeend", `<img class="hero-slide" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}">`);
-	});
+	heroGroups = createHeroGroups(categoryKey);
+	const renderGroup = (group) => `<div class="hero-slide-group" data-count="${group.length}">${group.map((fileName, index) =>
+		`<div class="hero-slide-frame"><img class="hero-slide" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}"></div>`
+	).join("")}</div>`;
+	heroTrack.innerHTML = heroGroups.map(renderGroup).join("") + renderGroup(heroGroups[0]);
 
 	galleryTrack.innerHTML = category.photos.map((fileName, index) =>
 		`<article class="photo-card">
@@ -54,17 +59,44 @@ function renderCategory(categoryKey) {
 			<div class="caption"><span>${String(index + 1).padStart(2, "0")}</span><span>${category.name}</span></div>
 		</article>`
 	).join("");
-
 	currentPhoto = 0;
 	currentHeroSlide = 0;
 	showPhoto(0);
 	moveHeroCarousel(false);
 }
 
+function createHeroGroups(categoryKey) {
+	const photos = categories[categoryKey].photos;
+	const groups = [];
+
+	if (categoryKey === "produ") {
+		let portraitGroup = [];
+		photos.forEach((fileName) => {
+			if (produHorizontalPhotos.has(fileName)) {
+				if (portraitGroup.length) groups.push(portraitGroup);
+				portraitGroup = [];
+				groups.push([fileName]);
+			} else {
+				portraitGroup.push(fileName);
+				if (portraitGroup.length === 2) {
+					groups.push(portraitGroup);
+					portraitGroup = [];
+				}
+			}
+		});
+		if (portraitGroup.length) groups.push(portraitGroup);
+		return groups;
+	}
+
+	for (let index = 0; index < photos.length; index += 3) {
+		groups.push(photos.slice(index, index + 3));
+	}
+	return groups;
+}
+
 function moveHeroCarousel(withAnimation = true) {
-	const slideDistance = heroCarousel.clientWidth / visibleHeroSlides + 4;
 	heroTrack.style.transition = withAnimation ? "transform 0.8s ease" : "none";
-	heroTrack.style.transform = `translateX(-${currentHeroSlide * slideDistance}px)`;
+	heroTrack.style.transform = `translateX(-${currentHeroSlide * 100}%)`;
 }
 
 categoryButtons.forEach((button) => {
@@ -77,7 +109,7 @@ setInterval(() => {
 	currentHeroSlide += 1;
 	moveHeroCarousel();
 
-	if (currentHeroSlide === categories[currentCategory].photos.length) {
+	if (currentHeroSlide === heroGroups.length) {
 		setTimeout(() => {
 			currentHeroSlide = 0;
 			moveHeroCarousel(false);

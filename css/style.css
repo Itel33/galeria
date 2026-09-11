@@ -5,7 +5,12 @@
 html { scroll-behavior: smooth; }
 
 body {
+  position: relative;
   background: #111;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: #f4f3ef;
   font-family: Inter, Arial, sans-serif;
   font-size: 14px;
@@ -107,8 +112,7 @@ h1 em {
 }
 
 .hero-image {
-  aspect-ratio: 3 / 2;
-  max-height: 620px;
+  height: clamp(300px, 38vw, 620px);
 }
 
 .hero-carousel {
@@ -119,16 +123,44 @@ h1 em {
 
 .hero-track {
   display: flex;
-  gap: 12px;
   width: 100%;
   height: 100%;
 }
 
-.hero-slide {
+.hero-slide-group {
+  display: flex;
+  flex: 0 0 100%;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.hero-slide-frame {
   flex: 0 0 calc((100% - 24px) / 3);
   width: calc((100% - 24px) / 3);
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-slide-group[data-count="1"] .hero-slide-frame {
+  flex-basis: 100%;
+  width: 100%;
+}
+
+.hero-slide-group[data-count="2"] .hero-slide-frame {
+  flex-basis: calc((100% - 12px) / 2);
+  width: calc((100% - 12px) / 2);
+}
+
+.hero-slide {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
   object-fit: contain;
+  object-position: center;
   background: transparent;
 }
 
@@ -245,7 +277,10 @@ footer {
 
   h1 { font-size: 62px; }
 
-  .hero-image { width: 100%; }
+  .hero-image {
+    width: 100%;
+    height: clamp(260px, 80vw, 480px);
+  }
 
   .section-heading {
     display: block;
