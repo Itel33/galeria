@@ -266,6 +266,11 @@ footer {
 }
 
 @media (max-width: 700px) {
+  body {
+    background-attachment: scroll;
+    background-position: center top;
+  }
+
   .nav { height: 65px; }
 
   .hero {
