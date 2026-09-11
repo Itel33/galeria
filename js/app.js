@@ -15,6 +15,15 @@ const categories = {
 		name: "Produ",
 		folder: "Produ",
 		photos: ["DSC_0044-2.jpg", "DSC_0875.jpg", "DSC_0951.jpg", "DSC_1061.jpg", "DSC_1290.jpg", "DSC_1386.jpg", "DSC_1590.jpg", "DSC_1633.jpg"]
+	},
+	viajes: {
+		name: "Viajes",
+		folder: "Viajes",
+		photos: [
+			"20260203_232255.jpg", "20260205_113505.jpg", "20260205_114338.jpg", "20260206_184902.jpg", "20260208_094831.jpg", "20260208_133429.jpg",
+			"DSCN4031.JPG", "DSCN4058.JPG", "DSCN4142.JPG", "DSCN4174.JPG", "DSCN4246.JPG", "DSCN4273.JPG", "DSCN4324.JPG",
+			"DSCN4340.JPG", "DSCN4341.JPG", "DSCN4342.JPG", "DSCN4416.JPG", "DSCN4418.JPG", "DSCN4425.JPG", "DSCN4430.JPG"
+		]
 	}
 };
 const produHorizontalPhotos = new Set(["DSC_0044-2.jpg", "DSC_1061.jpg", "DSC_1290.jpg", "DSC_1386.jpg"]);
