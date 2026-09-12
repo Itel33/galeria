@@ -75,7 +75,7 @@ function addCategoryToControls(categoryKey, categoryName) {
 	categoryButton.dataset.category = categoryKey;
 	categoryButton.textContent = categoryName;
 	categoryButton.addEventListener("click", () => renderCategory(categoryKey));
-	categoryNav.insertBefore(categoryButton, document.querySelector("#admin-toggle"));
+	categoryNav.appendChild(categoryButton);
 	const categoryOption = document.createElement("option");
 	categoryOption.value = categoryKey;
 	categoryOption.textContent = categoryName;
@@ -204,6 +204,15 @@ function instagramUrl(value) {
 	return `https://www.instagram.com/${cleanValue}/`;
 }
 
+function instagramHandle(value) {
+	try {
+		const pathPart = new URL(value).pathname.split("/").filter(Boolean)[0];
+		return pathPart ? `@${decodeURIComponent(pathPart)}` : "Instagram";
+	} catch {
+		return "Instagram";
+	}
+}
+
 async function updateInstagram(input) {
 	const { error } = await supabaseClient.from("photos").update({ instagram_url: instagramUrl(input.value) || null }).eq("id", input.dataset.id);
 	adminStatus.textContent = error ? error.message : "Instagram actualizado.";
@@ -296,8 +305,10 @@ function renderCollectionTools() {
 	const localKey = `liked-local-${currentCategory}-${fileName}`;
 	const likeCount = category.likes?.[fileName] || (localStorage.getItem(localKey) ? 1 : 0);
 	const liked = photoId ? localStorage.getItem(`liked-photo-${photoId}`) : localStorage.getItem(localKey);
+	const instagram = category.instagram?.[fileName];
+	const instagramName = instagram ? instagramHandle(instagram) : "Instagram";
 	collectionTools.innerHTML = `<strong class="collection-tool-name"><span class="camera-mark" aria-hidden="true"></span>${escapeHtml(category.displayNames?.[fileName] || fileName)}</strong>
-		${category.instagram?.[fileName] ? `<a class="collection-tool-instagram" href="${escapeHtml(category.instagram[fileName])}" target="_blank" rel="noopener noreferrer"><span class="instagram-mark" aria-hidden="true"></span> Instagram ↗</a>` : `<span class="collection-tool-instagram instagram-empty"><span class="instagram-mark" aria-hidden="true"></span> Instagram</span>`}
+		${instagram ? `<a class="collection-tool-instagram" href="${escapeHtml(instagram)}" title="${escapeHtml(instagramName)}" target="_blank" rel="noopener noreferrer"><span class="instagram-mark" aria-hidden="true"></span> ${escapeHtml(instagramName)} ↗</a>` : `<span class="collection-tool-instagram instagram-empty"><span class="instagram-mark" aria-hidden="true"></span> Instagram</span>`}
 		<button class="collection-tool-like like-button${liked ? " liked" : ""}" type="button" data-id="${photoId || ""}" data-local-key="${localKey}" aria-label="Me gusta"><span class="heart-icon" aria-hidden="true">♡</span><span class="like-count">${likeCount}</span></button>`;
 	collectionTools.querySelector(".collection-tool-like").addEventListener("click", (event) => likePhoto(event.currentTarget));
 }

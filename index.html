@@ -4,17 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tu Galería — Fotografía</title>
-  <link rel="stylesheet" href="css/style.css?v=20260912-13">
+  <link rel="stylesheet" href="css/style.css?v=20260912-30">
 </head>
 <body>
   <header class="nav">
-    <a class="logo" href="index.html">MI GALERÍA</a>
-    <nav class="category-nav" aria-label="Categorías de fotos">
-      <button class="category-button active" type="button" data-category="freestyle">Freestyle</button>
-      <button class="category-button" type="button" data-category="produ">Iruka</button>
-      <button class="category-button" type="button" data-category="viajes">Viajes</button>
+    <div class="top-bar">
+      <a class="logo" href="index.html">MI GALERÍA</a>
       <button class="admin-button" type="button" id="admin-toggle">Administrar</button>
-    </nav>
+    </div>
+    <div class="category-bar">
+      <nav class="category-nav" aria-label="Categorías de fotos">
+        <button class="category-button active" type="button" data-category="freestyle">Freestyle</button>
+        <button class="category-button" type="button" data-category="produ">Iruka</button>
+        <button class="category-button" type="button" data-category="viajes">Viajes</button>
+      </nav>
+    </div>
   </header>
 
   <main>
@@ -118,6 +122,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js?v=20260912-13"></script>
-  <script src="js/app.js?v=20260912-13"></script>
+  <script src="js/app.js?v=20260912-15"></script>
 </body>
 </html>
