@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tu Galería — Fotografía</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260912-13">
 </head>
 <body>
   <header class="nav">
@@ -13,6 +13,7 @@
       <button class="category-button active" type="button" data-category="freestyle">Freestyle</button>
       <button class="category-button" type="button" data-category="produ">Iruka</button>
       <button class="category-button" type="button" data-category="viajes">Viajes</button>
+      <button class="admin-button" type="button" id="admin-toggle">Administrar</button>
     </nav>
   </header>
 
@@ -29,13 +30,7 @@
 
       <div class="hero-image">
         <div class="hero-carousel" aria-label="Carrusel automático de fotos">
-          <div class="hero-track">
-            <div class="hero-slide-frame"><img class="hero-slide" src="fotos/Freestyle/DSC_0605.jpg" alt="Foto de Freestyle 1"></div>
-            <div class="hero-slide-frame"><img class="hero-slide" src="fotos/Freestyle/DSC_1046.jpg" alt="Foto de Freestyle 2"></div>
-            <div class="hero-slide-frame"><img class="hero-slide" src="fotos/Freestyle/DSC_0233.jpg" alt="Foto de Freestyle 3"></div>
-            <div class="hero-slide-frame"><img class="hero-slide" src="fotos/Freestyle/DSC_0383.jpg" alt="Foto de Freestyle 4"></div>
-            <div class="hero-slide-frame"><img class="hero-slide" src="fotos/Freestyle/DSC_0934.jpg" alt="Foto de Freestyle 5"></div>
-          </div>
+          <div class="hero-track"></div>
         </div>
       </div>
     </section>
@@ -43,6 +38,7 @@
     <section class="gallery-section" id="galeria">
       <div class="section-heading">
         <p class="eyebrow">01 — COLECCIÓN</p>
+        <div class="collection-tools" id="collection-tools"></div>
         <h2 class="category-title">Freestyle</h2>
       </div>
 
@@ -76,11 +72,52 @@
     </section>
   </main>
 
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" type="button" id="lightbox-close" aria-label="Cerrar foto">×</button>
+    <button class="lightbox-arrow lightbox-previous" type="button" id="lightbox-previous" aria-label="Foto anterior">←</button>
+    <figure class="lightbox-content">
+      <img id="lightbox-image" alt="">
+      <figcaption id="lightbox-caption"></figcaption>
+    </figure>
+    <button class="lightbox-arrow lightbox-next" type="button" id="lightbox-next" aria-label="Foto siguiente">→</button>
+  </div>
+
+  <aside class="admin-panel" id="admin-panel" aria-hidden="true">
+    <button class="admin-close" type="button" id="admin-close" aria-label="Cerrar panel">×</button>
+    <p class="eyebrow">PANEL PRIVADO</p>
+    <h2>Gestionar fotos</h2>
+    <form id="login-form" class="admin-form">
+      <label>Correo<input id="login-email" type="email" autocomplete="email" required></label>
+      <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" required></label>
+      <button class="button" type="submit">Entrar</button>
+    </form>
+    <form id="upload-form" class="admin-form hidden">
+      <label>Temática existente
+        <select id="upload-category">
+          <option value="freestyle">Freestyle</option>
+          <option value="produ">Iruka</option>
+          <option value="viajes">Viajes</option>
+        </select>
+      </label>
+      <label>Nueva temática (opcional)
+        <input id="new-category-name" type="text" placeholder="Ej. Montañas" maxlength="40">
+      </label>
+      <label>Fotos<input id="upload-files" type="file" accept="image/*" multiple required></label>
+      <div class="selected-files" id="selected-files"></div>
+      <button class="button" type="submit">Subir fotos</button>
+      <div class="photo-manager" id="photo-manager"></div>
+      <button class="admin-logout" type="button" id="logout-button">Cerrar sesión</button>
+    </form>
+    <p class="admin-status" id="admin-status" role="status"></p>
+  </aside>
+
   <footer>
     <span>© 2026 Tu Galería</span>
     <span>Fotografía</span>
   </footer>
 
-  <script src="js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js?v=20260912-13"></script>
+  <script src="js/app.js?v=20260912-13"></script>
 </body>
 </html>

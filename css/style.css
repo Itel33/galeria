@@ -76,6 +76,66 @@ body > * {
   color: #f4f3ef;
 }
 
+.admin-button {
+  padding: 9px 14px;
+  border: 1px solid #8f8a7f;
+  border-radius: 100px;
+  background: #f4f3ef;
+  color: #111;
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-button:hover { background: transparent; color: #f4f3ef; }
+
+.admin-panel {
+  position: fixed;
+  z-index: 5;
+  top: 0;
+  right: 0;
+  width: min(420px, 100%);
+  height: 100vh;
+  padding: 42px 32px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #f4f3ef;
+  color: #111;
+  box-shadow: -12px 0 35px rgba(0, 0, 0, .3);
+  transform: translateX(100%);
+  transition: transform .3s ease;
+}
+
+.admin-panel.open { transform: translateX(0); }
+.admin-panel .eyebrow { color: #666158; }
+.admin-panel h2 { margin-bottom: 34px; font-size: 42px; font-weight: 500; letter-spacing: -.04em; }
+.admin-close { position: absolute; top: 22px; right: 24px; border: 0; background: transparent; color: #111; font-size: 30px; cursor: pointer; }
+.admin-form { display: grid; gap: 18px; }
+.admin-form label { display: grid; gap: 7px; font-size: 12px; letter-spacing: .04em; }
+.admin-form input, .admin-form select { width: 100%; padding: 12px; border: 1px solid #aaa49a; border-radius: 0; background: transparent; color: #111; font: inherit; }
+.admin-form .button { border-color: #111; background: #111; color: #f4f3ef; }
+.admin-form .button:hover { background: transparent; color: #111; }
+.admin-logout { border: 0; background: transparent; color: #555; cursor: pointer; text-align: left; font: inherit; }
+.admin-status { min-height: 24px; margin-top: 22px; color: #666158; line-height: 1.5; }
+.hidden { display: none; }
+.photo-manager { display: grid; gap: 18px; max-height: 42vh; overflow-y: auto; padding: 16px 4px 8px 0; border-top: 1px solid #c7c1b7; }
+.photo-manager h3 { font-size: 16px; font-weight: 600; }
+.photo-manager-group { display: grid; gap: 12px; padding-bottom: 15px; border-bottom: 1px solid #d4cec4; }
+.photo-manager-group > label { display: grid; gap: 6px; font-size: 11px; }
+.photo-manager-item { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 9px; background: #ebe8e1; }
+.photo-manager-item img { width: 58px; height: 58px; object-fit: cover; }
+.photo-manager-fields { display: grid; gap: 6px; min-width: 0; }
+.photo-manager-fields small { overflow: hidden; color: #777168; text-overflow: ellipsis; white-space: nowrap; }
+.photo-manager-item input { min-width: 0; padding: 8px; border: 1px solid #aaa49a; background: #f4f3ef; color: #111; font: inherit; }
+.selected-files { display: grid; gap: 12px; max-height: 32vh; overflow-y: auto; padding-right: 4px; }
+.selected-file-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 9px; align-items: center; padding: 8px; background: #ebe8e1; }
+.selected-file-row img { width: 52px; height: 52px; object-fit: cover; }
+.selected-file-fields { display: grid; gap: 6px; }
+.selected-file-fields input { width: 100%; padding: 8px; border: 1px solid #aaa49a; background: transparent; color: #111; font: inherit; }
+.photo-manager-item button { border: 0; background: transparent; color: #8a2920; cursor: pointer; font: inherit; }
+.photo-manager-item .save-photo { justify-self: start; padding: 7px 10px; border: 1px solid #111; background: #111; color: #f4f3ef; font-size: 11px; }
+.photo-manager-item .save-photo:hover { background: transparent; color: #111; }
+.delete-category { border: 0; color: #8a2920; background: transparent; cursor: pointer; font: inherit; text-align: left; }
+
 .hero {
   min-height: calc(100vh - 80px);
   padding: 7vw 5vw;
@@ -214,6 +274,15 @@ h1 em {
   font-weight: 500;
 }
 
+.collection-tools { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 auto; }
+.collection-tools > * { display: inline-flex; width: 160px; height: 42px; align-items: center; justify-content: flex-start; gap: 8px; box-sizing: border-box; padding: 9px 13px; border: 2px solid #aaa49a; border-radius: 100px; background: rgba(17, 17, 17, .78); color: #fff; font: inherit; text-decoration: none; }
+.collection-tools .collection-tool-instagram { justify-content: center; font-size: 12px; }
+.collection-tools .collection-tool-like { position: static; top: auto; right: auto; min-width: 160px; margin: 0; cursor: pointer; }
+.collection-tools .heart-icon { position: static; display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; font-size: 38px; }
+.collection-tools .instagram-empty { color: #8d8982; }
+.collection-tools .instagram-empty .instagram-mark { opacity: .55; }
+.collection-tools .camera-mark, .collection-tools .instagram-mark { position: relative; left: auto; top: auto; }
+
 .carousel {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -232,8 +301,42 @@ h1 em {
 }
 
 .photo-card {
+  position: relative;
   flex: 0 0 100%;
 }
+
+.photo-overlay {
+  position: static;
+  display: grid;
+  grid-template-rows: 52px 42px 42px;
+  align-items: center;
+  gap: 10px;
+  width: 160px;
+  max-width: 100%;
+  margin: 14px 0 0 auto;
+  padding: 0;
+  color: #fff;
+}
+
+.photo-overlay strong { position: static; display: flex; width: 160px; height: 42px; align-items: center; justify-content: flex-start; gap: 8px; overflow: hidden; box-sizing: border-box; padding: 9px 13px; border: 2px solid #aaa49a; border-radius: 100px; background: rgba(17, 17, 17, .78); font-size: 14px; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.camera-mark { position: relative; display: inline-flex; flex: 0 0 24px; width: 24px; height: 24px; align-items: center; justify-content: center; border: 0; border-radius: 4px; }
+.camera-mark::before { position: absolute; top: 5px; left: 1px; width: 18px; height: 13px; border: 2px solid #fff; border-radius: 4px; content: ""; }
+.camera-mark::after { position: absolute; top: 9px; left: 7px; width: 6px; height: 6px; border: 1.5px solid #fff; border-radius: 50%; box-shadow: 4px -7px 0 -1px #fff; content: ""; }
+.photo-overlay span, .photo-overlay a { color: #fff; font-size: 12px; text-decoration: none; }
+.photo-overlay > span { position: static; display: flex; width: 160px; height: 42px; align-items: center; justify-content: flex-start; gap: 8px; box-sizing: border-box; padding: 9px 13px; border: 2px solid #aaa49a; border-radius: 100px; background: rgba(17, 17, 17, .78); text-align: left; }
+.photo-overlay > span .instagram-mark { position: relative; flex: 0 0 24px; }
+.photo-overlay .instagram-empty { color: #8d8982; font-size: 14px; font-weight: 600; }
+.photo-overlay .instagram-empty .instagram-mark { opacity: .55; }
+.photo-overlay .like-button { position: static; width: 160px; min-width: 160px; height: 52px; align-items: center; justify-content: flex-start; gap: 8px; box-sizing: border-box; padding-left: 14px; }
+.photo-overlay .like-button .heart-icon { position: relative; display: inline-flex; flex: 0 0 34px; width: 34px; height: 34px; align-items: center; justify-content: center; font-size: 44px; line-height: 1; }
+.photo-overlay .photo-instagram-link { position: static; width: 160px; height: 42px; justify-content: center; box-sizing: border-box; border: 2px solid #aaa49a; background: rgba(17, 17, 17, .78); }
+.photo-overlay .photo-instagram-link .instagram-mark { position: relative; flex: 0 0 24px; }
+.photo-overlay .like-button, .photo-overlay .photo-instagram-link { box-shadow: 0 3px 12px rgba(0, 0, 0, .25); }
+.photo-overlay .photo-instagram-link { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(255, 255, 255, .55); border-radius: 100px; background: rgba(0, 0, 0, .35); transition: background .2s ease, transform .2s ease; }
+.photo-overlay .photo-instagram-link:hover { background: rgba(255, 255, 255, .18); transform: translateY(-1px); }
+.instagram-mark { position: relative; display: inline-flex; flex: 0 0 24px; width: 24px; height: 24px; align-items: center; justify-content: center; border: 0; border-radius: 6px; }
+.instagram-mark::before { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border: 2px solid #fff; border-radius: 6px; content: ""; }
+.instagram-mark::after { position: absolute; top: 8px; left: 8px; width: 6px; height: 6px; border: 1.5px solid #fff; border-radius: 50%; box-shadow: 6px -6px 0 -1px #fff; content: ""; }
 
 .photo-placeholder {
   aspect-ratio: 4 / 3;
@@ -244,14 +347,79 @@ h1 em {
 .photo-card.large .photo-placeholder { aspect-ratio: 16 / 9; }
 .photo-card.wide .photo-placeholder { aspect-ratio: 16 / 8; }
 
+.empty-category {
+  width: 100%;
+  padding: 80px 20px;
+  border: 1px solid #555;
+  color: #aaa8a1;
+  text-align: center;
+}
+
 .caption {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   padding-top: 13px;
-  font-size: 11px;
-  color: #aaa8a1;
+  gap: 10px;
+  font-size: 13px;
+  color: #f4f3ef;
   letter-spacing: .03em;
 }
+
+.caption > span:nth-child(2) { flex: 1 1 180px; font-size: 16px; font-weight: 600; }
+
+.lightbox { position: fixed; z-index: 10; inset: 0; display: none; align-items: center; justify-content: center; padding: 5vh 7vw; background: rgba(0, 0, 0, .94); }
+.lightbox.open { display: flex; }
+.lightbox-content { display: grid; max-width: 92vw; max-height: 90vh; margin: 0; justify-items: center; }
+.lightbox-content img { display: block; width: auto; max-width: 84vw; height: auto; max-height: 82vh; object-fit: contain; }
+.lightbox-content figcaption { margin-top: 14px; color: #f4f3ef; font-size: 14px; text-align: center; }
+.lightbox-close, .lightbox-arrow { position: absolute; border: 1px solid #777168; border-radius: 50%; background: rgba(17, 17, 17, .7); color: #f4f3ef; cursor: pointer; }
+.lightbox-close { top: 22px; right: 28px; width: 44px; height: 44px; font-size: 30px; }
+.lightbox-arrow { top: 50%; width: 48px; height: 48px; font-size: 24px; transform: translateY(-50%); }
+.lightbox-previous { left: 24px; }
+.lightbox-next { right: 24px; }
+.photo-card > .photo-placeholder { cursor: zoom-in; }
+
+.like-button {
+  position: absolute;
+  z-index: 2;
+  top: 18px;
+  right: 18px;
+  margin: 0;
+  min-width: 64px;
+  padding: 9px 13px;
+  border: 2px solid #aaa49a;
+  border-radius: 100px;
+  background: rgba(17, 17, 17, .78);
+  color: #f4f3ef;
+  cursor: pointer;
+  font: inherit;
+}
+
+.heart-icon {
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  font-family: Georgia, serif;
+  font-size: 34px;
+  line-height: 1;
+  text-shadow: 0 1px 8px rgba(255, 255, 255, .35);
+  transition: transform .2s ease, text-shadow .2s ease;
+}
+
+.like-button:hover .heart-icon,
+.like-button.liked .heart-icon {
+  transform: scale(1.12);
+  text-shadow: 0 0 12px rgba(255, 255, 255, .75);
+}
+.like-count { font-size: 16px; font-weight: 600; }
+.instagram-link { display: inline-block; margin-left: 12px; padding: 7px 11px; border: 1px solid #777168; border-radius: 100px; color: #f4f3ef; font-size: 11px; text-decoration: none; transition: background .2s ease, color .2s ease; }
+.instagram-link:hover { background: #f4f3ef; color: #111; }
+.instagram-pending { flex-basis: 100%; margin-left: 0; color: #aaa8a1; font-size: 12px; }
+.like-button:hover span:first-child, .like-button.liked span:first-child { color: #fff; }
+.like-button.liked { color: #d75b56; }
+.like-button:disabled { cursor: default; opacity: .55; }
 
 .carousel-button {
   width: 44px;
@@ -287,6 +455,12 @@ footer {
 
   .nav { height: 65px; }
 
+  .admin-panel { padding: 42px 22px 80px; }
+
+  .nav { align-items: flex-start; padding-top: 13px; }
+  .category-nav { flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+  .category-button, .admin-button { padding: 6px 9px; font-size: 11px; }
+
   .hero {
     min-height: auto;
     padding: 15vw 5vw;
@@ -316,4 +490,10 @@ footer {
     object-fit: contain;
     display: block;
   }
+
+  .lightbox { padding: 5vh 4vw; }
+  .lightbox-content img { max-width: 92vw; max-height: 78vh; }
+  .lightbox-arrow { width: 40px; height: 40px; }
+  .lightbox-previous { left: 8px; }
+  .lightbox-next { right: 8px; }
 }
