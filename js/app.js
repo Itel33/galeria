@@ -12,11 +12,6 @@ let categories = {
 		folder: "Freestyle",
 		photos: []
 	},
-	produ: {
-		name: "Ciudad",
-		folder: "Produ",
-		photos: []
-	},
 	viajes: {
 		name: "Viajes",
 		folder: "Viajes",
