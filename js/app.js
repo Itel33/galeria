@@ -13,7 +13,7 @@ let categories = {
 		photos: []
 	},
 	produ: {
-		name: "Iruka",
+		name: "Ciudad",
 		folder: "Produ",
 		photos: []
 	},
