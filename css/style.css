@@ -194,8 +194,6 @@ body > * {
 }
 
 .category-button:hover { transform: translateY(-2px); }
-.category-button.active { background: var(--photo-accent-soft); }
-
 .admin-button {
   padding: 9px 14px;
   border: 1px solid var(--photo-accent);
@@ -745,7 +743,7 @@ h1 em {
   backdrop-filter: blur(12px) saturate(140%);
 }
 
-.category-button.active { background: var(--photo-accent-soft); }
+.category-button { background: transparent; }
 
 .category-button:hover,
 .admin-button:hover,
