@@ -13,6 +13,37 @@ alter table public.photos add column if not exists category_name text;
 alter table public.photos add column if not exists display_name text;
 alter table public.photos add column if not exists instagram_url text;
 alter table public.photos add column if not exists likes_count integer not null default 0;
+alter table public.photos add column if not exists sort_order integer;
+alter table public.photos add column if not exists category_order integer;
+
+with ranked_categories as (
+  select category, dense_rank() over (order by first_photo, category) - 1 as position
+  from (
+    select category, min(created_at) as first_photo
+    from public.photos
+    group by category
+  ) categories
+)
+update public.photos
+set category_order = ranked_categories.position
+from ranked_categories
+where public.photos.category = ranked_categories.category
+  and public.photos.category_order is null;
+
+with ranked_photos as (
+  select id, row_number() over (partition by category order by created_at, id) - 1 as position
+  from public.photos
+  where sort_order is null
+)
+update public.photos
+set sort_order = ranked_photos.position
+from ranked_photos
+where public.photos.id = ranked_photos.id;
+
+alter table public.photos alter column sort_order set default 0;
+alter table public.photos alter column sort_order set not null;
+alter table public.photos alter column category_order set default 0;
+alter table public.photos alter column category_order set not null;
 
 alter table public.photos enable row level security;
 
@@ -73,3 +104,84 @@ as $$
 $$;
 
 grant execute on function public.increment_photo_like(bigint) to anon, authenticated;
+
+create or replace function public.reorder_photos(p_category text, p_photo_ids bigint[])
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  category_photo_count integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required to reorder photos';
+  end if;
+
+  select count(*) into category_photo_count
+  from public.photos
+  where category = p_category;
+
+  if coalesce(cardinality(p_photo_ids), 0) <> category_photo_count
+    or (select count(distinct id) from unnest(p_photo_ids) as requested(id)) <> category_photo_count
+    or exists (
+      select 1
+      from unnest(p_photo_ids) as requested(id)
+      where not exists (
+        select 1 from public.photos
+        where photos.id = requested.id and photos.category = p_category
+      )
+    )
+  then
+    raise exception 'The submitted photo order does not match the category';
+  end if;
+
+  update public.photos
+  set sort_order = requested.position - 1
+  from unnest(p_photo_ids) with ordinality as requested(id, position)
+  where photos.id = requested.id and photos.category = p_category;
+end;
+$$;
+
+revoke all on function public.reorder_photos(text, bigint[]) from public, anon;
+grant execute on function public.reorder_photos(text, bigint[]) to authenticated;
+
+create or replace function public.reorder_categories(p_category_keys text[])
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  category_count integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required to reorder categories';
+  end if;
+
+  select count(distinct category) into category_count
+  from public.photos;
+
+  if coalesce(cardinality(p_category_keys), 0) <> category_count
+    or (select count(distinct category) from unnest(p_category_keys) as requested(category)) <> category_count
+    or exists (
+      select 1
+      from unnest(p_category_keys) as requested(category)
+      where not exists (
+        select 1 from public.photos
+        where photos.category = requested.category
+      )
+    )
+  then
+    raise exception 'The submitted category order does not match existing categories';
+  end if;
+
+  update public.photos
+  set category_order = requested.position - 1
+  from unnest(p_category_keys) with ordinality as requested(category, position)
+  where photos.category = requested.category;
+end;
+$$;
+
+revoke all on function public.reorder_categories(text[]) from public, anon;
+grant execute on function public.reorder_categories(text[]) to authenticated;

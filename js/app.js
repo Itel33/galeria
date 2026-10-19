@@ -21,12 +21,20 @@ let categories = {
 const supabaseClient = window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY
 	? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
 	: null;
-const produHorizontalPhotos = new Set(["DSC_0044-2.jpg", "DSC_1061.jpg", "DSC_1290.jpg", "DSC_1386.jpg"]);
 let currentPhoto = 0;
 let currentHeroSlide = 0;
 let currentCategory = "freestyle";
 let heroGroups = [];
 let cloudPhotos = [];
+let categoryRenderVersion = 0;
+let photoOrderingAvailable = true;
+let categoryOrderingAvailable = true;
+let heroPortraitLimit = window.matchMedia("(max-width: 700px)").matches ? 2 : 3;
+const imageDimensionsCache = new Map();
+const pendingPhotoOrders = new Map();
+let draggedPhotoId = null;
+let pendingCategoryOrder = null;
+let draggedCategoryKey = null;
 const adminPanel = document.querySelector("#admin-panel");
 const adminStatus = document.querySelector("#admin-status");
 const loginForm = document.querySelector("#login-form");
@@ -35,6 +43,9 @@ const photoManager = document.querySelector("#photo-manager");
 const uploadFiles = document.querySelector("#upload-files");
 const selectedFiles = document.querySelector("#selected-files");
 let selectedObjectUrls = [];
+let selectedFileDetails = new Map();
+let selectedFilePage = 0;
+const selectedFilePageSize = 20;
 const lightbox = document.querySelector("#lightbox");
 const lightboxImage = document.querySelector("#lightbox-image");
 const lightboxCaption = document.querySelector("#lightbox-caption");
@@ -46,19 +57,56 @@ function categoryKeyFromName(name) {
 
 function renderSelectedFiles() {
 	selectedObjectUrls.forEach((url) => URL.revokeObjectURL(url));
-	selectedObjectUrls = [...uploadFiles.files].map((file) => URL.createObjectURL(file));
-	selectedFiles.innerHTML = [...uploadFiles.files].map((file, index) => `
+	selectedObjectUrls = [];
+	const files = [...uploadFiles.files];
+	const pageCount = Math.ceil(files.length / selectedFilePageSize);
+	selectedFilePage = Math.min(selectedFilePage, Math.max(0, pageCount - 1));
+	const start = selectedFilePage * selectedFilePageSize;
+	const visibleFiles = files.slice(start, start + selectedFilePageSize);
+	const rows = visibleFiles.map((file, visibleIndex) => {
+		const index = start + visibleIndex;
+		const objectUrl = URL.createObjectURL(file);
+		selectedObjectUrls.push(objectUrl);
+		const details = selectedFileDetails.get(index) || { displayName: file.name, instagram: "" };
+		selectedFileDetails.set(index, details);
+		return `
 		<div class="selected-file-row">
-			<img src="${selectedObjectUrls[index]}" alt="">
+			<img src="${objectUrl}" alt="" loading="lazy" decoding="async">
 			<div class="selected-file-fields">
 				<strong>${escapeHtml(file.name)}</strong>
-				<input data-file-index="${index}" class="selected-file-name" type="text" value="${escapeHtml(file.name)}" placeholder="Nombre de la foto">
-				<input data-file-index="${index}" class="selected-file-instagram" type="text" placeholder="Instagram del modelo, opcional">
+				<input data-file-index="${index}" class="selected-file-name" type="text" value="${escapeHtml(details.displayName)}" placeholder="Nombre de la foto">
+				<input data-file-index="${index}" class="selected-file-instagram" type="text" value="${escapeHtml(details.instagram)}" placeholder="Instagram del modelo, opcional">
 			</div>
-		</div>`).join("");
+		</div>`;
+	}).join("");
+	const pageControls = pageCount > 1 ? `
+		<div class="selected-files-pagination">
+			<span>Fotos ${start + 1}–${Math.min(start + selectedFilePageSize, files.length)} de ${files.length}</span>
+			<button type="button" class="selected-files-page" data-step="-1" ${selectedFilePage === 0 ? "disabled" : ""}>Anterior</button>
+			<button type="button" class="selected-files-page" data-step="1" ${selectedFilePage === pageCount - 1 ? "disabled" : ""}>Siguiente</button>
+		</div>` : files.length ? `<div class="selected-files-count">${files.length} foto(s) seleccionada(s)</div>` : "";
+	selectedFiles.innerHTML = rows + pageControls;
+	selectedFiles.querySelectorAll(".selected-file-name, .selected-file-instagram").forEach((input) => {
+		input.addEventListener("input", () => {
+			const index = Number(input.dataset.fileIndex);
+			const details = selectedFileDetails.get(index);
+			if (input.classList.contains("selected-file-name")) details.displayName = input.value;
+			else details.instagram = input.value;
+		});
+	});
+	selectedFiles.querySelectorAll(".selected-files-page").forEach((button) => {
+		button.addEventListener("click", () => {
+			selectedFilePage += Number(button.dataset.step);
+			renderSelectedFiles();
+		});
+	});
 }
 
-uploadFiles.addEventListener("change", renderSelectedFiles);
+uploadFiles.addEventListener("change", () => {
+	selectedFileDetails.clear();
+	selectedFilePage = 0;
+	renderSelectedFiles();
+});
 
 function addCategoryToControls(categoryKey, categoryName) {
 	if (!categoryKey || categories[categoryKey]) return;
@@ -82,21 +130,45 @@ async function loadCloudPhotos() {
 
 	let { data, error } = await supabaseClient
 		.from("photos")
-		.select("id, category, category_name, display_name, instagram_url, file_name, storage_path, likes_count")
+		.select("id, category, category_name, display_name, instagram_url, file_name, storage_path, likes_count, sort_order, category_order")
+		.order("category_order", { ascending: true })
+		.order("category", { ascending: true })
+		.order("sort_order", { ascending: true })
 		.order("created_at", { ascending: true });
+	photoOrderingAvailable = !error;
+	categoryOrderingAvailable = !error;
 	if (error) {
 		const fallback = await supabaseClient
 			.from("photos")
-			.select("id, category, category_name, display_name, instagram_url, file_name, storage_path")
+			.select("id, category, category_name, display_name, instagram_url, file_name, storage_path, sort_order, category_order")
+			.order("category_order", { ascending: true })
+			.order("category", { ascending: true })
+			.order("sort_order", { ascending: true })
 			.order("created_at", { ascending: true });
-		if (fallback.error) {
-			const minimal = await supabaseClient
-				.from("photos")
-				.select("id, category, file_name, storage_path")
-				.order("created_at", { ascending: true });
-			data = minimal.data;
-		} else {
+		if (!fallback.error) {
 			data = fallback.data;
+			photoOrderingAvailable = true;
+			categoryOrderingAvailable = true;
+		} else {
+			const photoOrderFallback = await supabaseClient
+				.from("photos")
+				.select("id, category, category_name, display_name, instagram_url, file_name, storage_path, sort_order")
+				.order("category", { ascending: true })
+				.order("sort_order", { ascending: true })
+				.order("created_at", { ascending: true });
+			if (!photoOrderFallback.error) {
+				data = photoOrderFallback.data;
+				photoOrderingAvailable = true;
+				categoryOrderingAvailable = false;
+			} else {
+				const minimal = await supabaseClient
+					.from("photos")
+					.select("id, category, file_name, storage_path")
+					.order("created_at", { ascending: true });
+				data = minimal.data;
+				photoOrderingAvailable = false;
+				categoryOrderingAvailable = false;
+			}
 		}
 	}
 	if (!data) return;
@@ -105,12 +177,15 @@ async function loadCloudPhotos() {
 	if (!data.length) return;
 
 	const cloudCategories = {};
+	const orderedCategoryKeys = [];
 	data.forEach((photo) => {
 		addCategoryToControls(photo.category, photo.category_name || photo.category);
 		if (!cloudCategories[photo.category]) {
+			orderedCategoryKeys.push(photo.category);
 			const fallback = categories[photo.category] || { name: photo.category_name || photo.category, folder: photo.category, photos: [] };
 			cloudCategories[photo.category] = {
 				...fallback,
+				categoryOrder: photo.category_order ?? orderedCategoryKeys.length - 1,
 				photos: [...fallback.photos],
 				cloudUrls: { ...(fallback.cloudUrls || {}) },
 				displayNames: { ...(fallback.displayNames || {}) },
@@ -132,6 +207,19 @@ async function loadCloudPhotos() {
 		cloudCategories[photo.category].instagram[photo.file_name] = photo.instagram_url || "";
 	});
 	categories = { ...categories, ...cloudCategories };
+	applyCategoryOrder(orderedCategoryKeys);
+}
+
+function applyCategoryOrder(categoryKeys) {
+	const categoryNav = document.querySelector(".category-nav");
+	const uploadCategory = document.querySelector("#upload-category");
+	const orderedButtons = categoryKeys.map((key) => categoryNav.querySelector(`.category-button[data-category="${CSS.escape(key)}"]`)).filter(Boolean);
+	const remainingButtons = [...categoryNav.querySelectorAll(".category-button")].filter((button) => !categoryKeys.includes(button.dataset.category));
+	[...orderedButtons, ...remainingButtons].forEach((button) => categoryNav.appendChild(button));
+
+	const orderedOptions = categoryKeys.map((key) => [...uploadCategory.options].find((option) => option.value === key)).filter(Boolean);
+	const remainingOptions = [...uploadCategory.options].filter((option) => !categoryKeys.includes(option.value));
+	[...orderedOptions, ...remainingOptions].forEach((option) => uploadCategory.appendChild(option));
 }
 
 function escapeHtml(value) {
@@ -147,14 +235,33 @@ function renderPhotoManager() {
 		(groups[photo.category] ||= { name: photo.category_name || photo.category, photos: [] }).photos.push(photo);
 		return groups;
 	}, {});
-	photoManager.innerHTML = `<h3>Editar fotos</h3>${Object.entries(grouped).map(([category, group]) => `
-		<div class="photo-manager-group">
+	const categoryKeys = Object.keys(grouped);
+	const displayedCategoryKeys = pendingCategoryOrder
+		? [...pendingCategoryOrder.filter((key) => grouped[key]), ...categoryKeys.filter((key) => !pendingCategoryOrder.includes(key))]
+		: categoryKeys;
+	const categoryOrderManager = categoryKeys.length > 1 ? `
+		<section class="category-order-manager">
+			<h4>Ordenar temáticas</h4>
+			<p>Arrastra las temáticas para cambiar su orden en la galería.</p>
+			${categoryOrderingAvailable ? "" : `<p class="photo-order-warning">Para habilitar el orden de temáticas, ejecuta el archivo supabase-setup.sql actualizado en el SQL Editor de Supabase.</p>`}
+			<div class="category-order-list">
+				${displayedCategoryKeys.map((category) => `<div class="category-order-item" data-category="${escapeHtml(category)}" ${categoryOrderingAvailable ? 'draggable="true"' : ""}>
+					<span class="category-order-handle" aria-hidden="true">⠿</span>
+					<span>${escapeHtml(grouped[category].name)}</span>
+				</div>`).join("")}
+			</div>
+			<button type="button" class="save-category-order" ${categoryOrderingAvailable ? "" : "disabled"}>Guardar orden de temáticas</button>
+		</section>` : "";
+	photoManager.innerHTML = `<h3>Editar fotos</h3>${photoOrderingAvailable ? "" : `<p class="photo-order-warning">Para habilitar el orden manual de las fotos, ejecuta el archivo supabase-setup.sql actualizado en el SQL Editor de Supabase.</p>`}${categoryOrderManager}${Object.entries(grouped).map(([category, group]) => `
+		<div class="photo-manager-group" data-category="${escapeHtml(category)}">
 			<label>Nombre de temática<input class="category-name-input" value="${escapeHtml(group.name)}" data-category="${escapeHtml(category)}"></label>
 			<button type="button" class="delete-category" data-category="${escapeHtml(category)}">Borrar toda la temática</button>
-			${group.photos.map((photo) => {
+			<button type="button" class="save-photo-order" data-category="${escapeHtml(category)}" ${photoOrderingAvailable ? "" : "disabled"}>Guardar orden</button>
+			${orderedPhotosForCategory(category, group.photos).map((photo) => {
 				const { data: publicFile } = supabaseClient.storage.from("gallery").getPublicUrl(photo.storage_path);
-				return `<div class="photo-manager-item">
-					<img src="${publicFile.publicUrl}" alt="">
+				return `<div class="photo-manager-item" data-id="${photo.id}">
+					<button type="button" class="photo-order-handle" aria-label="Arrastrar para ordenar" title="Arrastra para cambiar el orden">⠿</button>
+					<img src="${publicFile.publicUrl}" alt="" loading="lazy" decoding="async">
 					<div class="photo-manager-fields">
 						<small>${escapeHtml(photo.file_name)}</small>
 						<input class="photo-name-input" aria-label="Nombre de la foto" value="${escapeHtml(photo.display_name || photo.file_name)}" data-id="${photo.id}">
@@ -171,6 +278,113 @@ function renderPhotoManager() {
 	photoManager.querySelectorAll(".category-name-input").forEach((input) => input.addEventListener("change", () => updateCategoryName(input)));
 	photoManager.querySelectorAll(".delete-photo").forEach((button) => button.addEventListener("click", () => deletePhoto(button)));
 	photoManager.querySelectorAll(".delete-category").forEach((button) => button.addEventListener("click", () => deleteCategory(button)));
+	photoManager.querySelectorAll(".save-photo-order").forEach((button) => button.addEventListener("click", () => savePhotoOrder(button)));
+	const categoryOrderList = photoManager.querySelector(".category-order-list");
+	if (categoryOrderList) {
+		categoryOrderList.querySelectorAll(".category-order-item").forEach((item) => {
+			item.addEventListener("dragstart", (event) => {
+				draggedCategoryKey = item.dataset.category;
+				event.dataTransfer.effectAllowed = "move";
+				event.dataTransfer.setData("text/plain", draggedCategoryKey);
+				item.classList.add("dragging");
+			});
+			item.addEventListener("dragend", () => {
+				draggedCategoryKey = null;
+				item.classList.remove("dragging");
+			});
+			item.addEventListener("dragover", (event) => event.preventDefault());
+			item.addEventListener("drop", (event) => {
+				event.preventDefault();
+				const source = categoryOrderList.querySelector(`.category-order-item[data-category="${CSS.escape(draggedCategoryKey)}"]`);
+				if (!source || source === item) return;
+				const items = [...categoryOrderList.querySelectorAll(".category-order-item")];
+				if (items.indexOf(source) < items.indexOf(item)) categoryOrderList.insertBefore(source, item.nextSibling);
+				else categoryOrderList.insertBefore(source, item);
+				pendingCategoryOrder = [...categoryOrderList.querySelectorAll(".category-order-item")].map((entry) => entry.dataset.category);
+				adminStatus.textContent = "Orden de temáticas cambiado. Guarda para actualizar la galería.";
+			});
+		});
+		photoManager.querySelector(".save-category-order")?.addEventListener("click", saveCategoryOrder);
+	}
+	photoManager.querySelectorAll(".photo-manager-item").forEach((item) => {
+		item.draggable = photoOrderingAvailable;
+		item.addEventListener("dragstart", (event) => {
+			draggedPhotoId = item.dataset.id;
+			event.dataTransfer.effectAllowed = "move";
+			event.dataTransfer.setData("text/plain", draggedPhotoId);
+			item.classList.add("dragging");
+		});
+		item.addEventListener("dragend", () => {
+			draggedPhotoId = null;
+			item.classList.remove("dragging");
+		});
+		item.addEventListener("dragover", (event) => event.preventDefault());
+		item.addEventListener("drop", (event) => {
+			event.preventDefault();
+			const group = item.closest(".photo-manager-group");
+			const source = group.querySelector(`.photo-manager-item[data-id="${draggedPhotoId}"]`);
+			if (!source || source === item) return;
+			const items = [...group.querySelectorAll(".photo-manager-item")];
+			if (items.indexOf(source) < items.indexOf(item)) group.insertBefore(source, item.nextSibling);
+			else group.insertBefore(source, item);
+			const ids = [...group.querySelectorAll(".photo-manager-item")].map((photo) => photo.dataset.id);
+			pendingPhotoOrders.set(group.dataset.category, ids);
+			adminStatus.textContent = "Orden cambiado. Guarda el orden para aplicarlo a la galería.";
+		});
+	});
+}
+
+async function saveCategoryOrder() {
+	if (!pendingCategoryOrder) return;
+	if (!categoryOrderingAvailable) {
+		adminStatus.textContent = "Ejecuta primero el archivo supabase-setup.sql actualizado en Supabase.";
+		return;
+	}
+	const button = photoManager.querySelector(".save-category-order");
+	button.disabled = true;
+	const { error } = await supabaseClient.rpc("reorder_categories", {
+		p_category_keys: pendingCategoryOrder
+	});
+	button.disabled = false;
+	if (error) {
+		adminStatus.textContent = `No se pudo guardar el orden de temáticas: ${error.message}`;
+		return;
+	}
+	pendingCategoryOrder = null;
+	adminStatus.textContent = "Orden de temáticas guardado.";
+	await loadCloudPhotos();
+	renderCategory(currentCategory);
+}
+
+function orderedPhotosForCategory(category, photos) {
+	const order = pendingPhotoOrders.get(category);
+	if (!order) return photos;
+	const photosById = new Map(photos.map((photo) => [String(photo.id), photo]));
+	return [...order.map((id) => photosById.get(String(id))).filter(Boolean), ...photos.filter((photo) => !order.includes(String(photo.id)))];
+}
+
+async function savePhotoOrder(button) {
+	const category = button.dataset.category;
+	const photoIds = pendingPhotoOrders.get(category);
+	if (!photoIds) return;
+	if (!photoOrderingAvailable) {
+		adminStatus.textContent = "Ejecuta primero el archivo supabase-setup.sql actualizado en Supabase.";
+		return;
+	}
+	button.disabled = true;
+	const { error } = await supabaseClient.rpc("reorder_photos", {
+		p_category: category,
+		p_photo_ids: photoIds.map(Number)
+	});
+	button.disabled = false;
+	if (error) {
+		adminStatus.textContent = `No se pudo guardar el orden: ${error.message}`;
+		return;
+	}
+	pendingPhotoOrders.delete(category);
+	adminStatus.textContent = "Orden de fotos guardado.";
+	await loadCloudPhotos();
+	renderCategory(currentCategory);
 }
 
 async function updatePhotoName(input) {
@@ -332,8 +546,10 @@ async function likePhoto(button) {
 previousButton.addEventListener("click", () => showPhoto(currentPhoto - 1));
 nextButton.addEventListener("click", () => showPhoto(currentPhoto + 1));
 
-function renderCategory(categoryKey) {
+async function renderCategory(categoryKey) {
 	const category = categories[categoryKey];
+	if (!category) return;
+	const renderVersion = ++categoryRenderVersion;
 	currentCategory = categoryKey;
 	if (category.photos.length) {
 		const backgroundUrl = new URL(
@@ -348,12 +564,9 @@ function renderCategory(categoryKey) {
 	});
 
 	const imagePath = (fileName) => category.cloudUrls?.[fileName] || `fotos/${category.folder}/${fileName}`;
-	heroGroups = category.photos.length ? createHeroGroups(categoryKey) : [[]];
-	const renderGroup = (group) => `<div class="hero-slide-group" data-count="${group.length}">${group.map((fileName, index) =>
-		`<div class="hero-slide-frame"><img class="hero-slide" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}"></div>`
-	).join("")}</div>`;
-	heroTrack.innerHTML = heroGroups.map(renderGroup).join("") + renderGroup(heroGroups[0]);
-
+	heroGroups = [[]];
+	currentHeroSlide = 0;
+	heroTrack.innerHTML = "";
 	galleryTrack.innerHTML = category.photos.length ? category.photos.map((fileName, index) => {
 		return `<article class="photo-card">
 			<img class="photo-placeholder" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}">
@@ -362,8 +575,17 @@ function renderCategory(categoryKey) {
 	}).join("") : `<p class="empty-category">Todavía no hay fotos en esta temática.</p>`;
 	galleryTrack.querySelectorAll(".photo-placeholder").forEach((image, index) => image.addEventListener("click", () => openLightbox(index)));
 	currentPhoto = 0;
-	currentHeroSlide = 0;
 	showPhoto(0);
+	const nextHeroGroups = category.photos.length
+		? await createHeroGroups(categoryKey, imagePath)
+		: [[]];
+	if (renderVersion !== categoryRenderVersion || currentCategory !== categoryKey) return;
+	heroGroups = nextHeroGroups;
+	const renderGroup = (group) => `<div class="hero-slide-group" data-count="${group.length}">${group.map((fileName, index) =>
+		`<div class="hero-slide-frame"><img class="hero-slide" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}"></div>`
+	).join("")}</div>`;
+	heroTrack.innerHTML = heroGroups.map(renderGroup).join("") + renderGroup(heroGroups[0]);
+	currentHeroSlide = 0;
 	moveHeroCarousel(false);
 }
 
@@ -401,33 +623,52 @@ document.addEventListener("keydown", (event) => {
 	if (event.key === "ArrowRight") moveLightbox(1);
 });
 
-function createHeroGroups(categoryKey) {
+async function createHeroGroups(categoryKey, imagePath) {
 	const photos = categories[categoryKey].photos;
-	const groups = [];
+	const portraitPhotos = [];
+	const slides = [];
+	const dimensions = await Promise.all(photos.map((fileName) => {
+		const src = imagePath(fileName);
+		if (!imageDimensionsCache.has(src)) {
+			imageDimensionsCache.set(src, new Promise((resolve) => {
+				const image = new Image();
+				image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+				image.onerror = () => {
+					console.error(`No se pudieron obtener las dimensiones de la imagen: ${src}`);
+					resolve(null);
+				};
+				image.src = src;
+			}));
+		}
+		return imageDimensionsCache.get(src);
+	}));
+	photos.forEach((fileName, index) => {
+		const size = dimensions[index];
+		if (size && size.width >= size.height) {
+			slides.push({ photos: [fileName], firstIndex: index });
+			return;
+		}
+		portraitPhotos.push({ fileName, index });
+	});
 
-	if (categoryKey === "produ") {
-		let portraitGroup = [];
-		photos.forEach((fileName) => {
-			if (produHorizontalPhotos.has(fileName)) {
-				if (portraitGroup.length) groups.push(portraitGroup);
-				portraitGroup = [];
-				groups.push([fileName]);
-			} else {
-				portraitGroup.push(fileName);
-				if (portraitGroup.length === 2) {
-					groups.push(portraitGroup);
-					portraitGroup = [];
-				}
-			}
-		});
-		if (portraitGroup.length) groups.push(portraitGroup);
-		return groups;
+	const groupCount = heroPortraitLimit === 2 && portraitPhotos.length > 2 && portraitPhotos.length % 2 === 1
+		? Math.floor(portraitPhotos.length / 2)
+		: Math.ceil(portraitPhotos.length / heroPortraitLimit);
+	if (groupCount) {
+		const baseGroupSize = Math.floor(portraitPhotos.length / groupCount);
+		const largerGroupCount = portraitPhotos.length % groupCount;
+		let photoIndex = 0;
+		for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
+			const groupSize = baseGroupSize + (groupIndex < largerGroupCount ? 1 : 0);
+			const group = portraitPhotos.slice(photoIndex, photoIndex + groupSize);
+			slides.push({
+				photos: group.map((photo) => photo.fileName),
+				firstIndex: group[0].index
+			});
+			photoIndex += groupSize;
+		}
 	}
-
-	for (let index = 0; index < photos.length; index += 3) {
-		groups.push(photos.slice(index, index + 3));
-	}
-	return groups;
+	return slides.sort((a, b) => a.firstIndex - b.firstIndex).map((slide) => slide.photos);
 }
 
 function moveHeroCarousel(withAnimation = true) {
@@ -485,10 +726,21 @@ uploadForm.addEventListener("submit", async (event) => {
 	try {
 		const { data: existingPhotos, error: existingError } = await supabaseClient
 			.from("photos")
-			.select("file_name")
+			.select("file_name, sort_order, category_order")
 			.eq("category", category);
 		if (existingError) throw existingError;
 		const existingNames = new Set((existingPhotos || []).map((photo) => photo.file_name.toLowerCase()));
+		let nextSortOrder = Math.max(-1, ...(existingPhotos || []).map((photo) => Number(photo.sort_order ?? -1))) + 1;
+		let categoryOrder = existingPhotos?.length ? Number(existingPhotos[0].category_order) : null;
+		if (categoryOrder === null) {
+			const { data: lastCategory, error: categoryOrderError } = await supabaseClient
+				.from("photos")
+				.select("category_order")
+				.order("category_order", { ascending: false })
+				.limit(1);
+			if (categoryOrderError) throw categoryOrderError;
+			categoryOrder = Number(lastCategory?.[0]?.category_order ?? -1) + 1;
+		}
 		const selectedNames = new Set();
 		const duplicateNames = files.filter((file) => {
 			const name = file.name.toLowerCase();
@@ -501,19 +753,24 @@ uploadForm.addEventListener("submit", async (event) => {
 			return;
 		}
 		for (const [index, file] of files.entries()) {
-			const displayName = selectedFiles.querySelector(`.selected-file-name[data-file-index="${index}"]`).value.trim() || file.name;
-			const instagram = instagramUrl(selectedFiles.querySelector(`.selected-file-instagram[data-file-index="${index}"]`).value);
+			const details = selectedFileDetails.get(index) || { displayName: file.name, instagram: "" };
+			const displayName = details.displayName.trim() || file.name;
+			const instagram = instagramUrl(details.instagram);
 			const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]/g, "-");
 			const storagePath = `${category}/${Date.now()}-${safeName}`;
 			const { error: uploadError } = await supabaseClient.storage.from("gallery").upload(storagePath, file, { upsert: false });
 			if (uploadError) throw uploadError;
-			const { error: insertError } = await supabaseClient.from("photos").insert({ category, category_name: categoryName, display_name: displayName, instagram_url: instagram || null, file_name: file.name, storage_path: storagePath });
+			const { error: insertError } = await supabaseClient.from("photos").insert({ category, category_name: categoryName, display_name: displayName, instagram_url: instagram || null, file_name: file.name, storage_path: storagePath, sort_order: nextSortOrder, category_order: categoryOrder });
 			if (insertError) throw insertError;
 			existingNames.add(file.name.toLowerCase());
+			nextSortOrder += 1;
 		}
 		await loadCloudPhotos();
 		renderCategory(currentCategory);
 		uploadForm.reset();
+		selectedFileDetails.clear();
+		selectedFilePage = 0;
+		renderSelectedFiles();
 		adminStatus.textContent = `${files.length} foto(s) subida(s).`;
 	} catch (error) {
 		adminStatus.textContent = error.message;
@@ -539,5 +796,16 @@ setInterval(() => {
 	}
 }, 3000);
 
-window.addEventListener("resize", () => moveHeroCarousel(false));
-loadCloudPhotos().finally(() => renderCategory("freestyle"));
+window.addEventListener("resize", () => {
+	const nextPortraitLimit = window.matchMedia("(max-width: 700px)").matches ? 2 : 3;
+	if (nextPortraitLimit !== heroPortraitLimit) {
+		heroPortraitLimit = nextPortraitLimit;
+		renderCategory(currentCategory);
+		return;
+	}
+	moveHeroCarousel(false);
+});
+loadCloudPhotos().finally(() => {
+	const firstCategory = document.querySelector(".category-nav .category-button")?.dataset.category || "freestyle";
+	renderCategory(firstCategory);
+});
