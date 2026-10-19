@@ -4,9 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tu Galería — Fotografía</title>
-  <link rel="stylesheet" href="css/style.css?v=20260912-30">
+  <link rel="stylesheet" href="css/style.css?v=20261019-82">
 </head>
 <body>
+  <div class="initial-loader" id="initial-loader" role="status" aria-live="polite">
+    <div class="initial-loader-content">
+      <span class="initial-loader-mark" aria-hidden="true"></span>
+      <p id="initial-loader-message"></p>
+      <button class="initial-loader-retry hidden" id="initial-loader-retry" type="button">Reintentar</button>
+    </div>
+  </div>
+  <div class="photo-backdrop" aria-hidden="true">
+    <div class="photo-backdrop-layer active"></div>
+    <div class="photo-backdrop-layer"></div>
+  </div>
   <header class="nav">
     <div class="top-bar">
       <a class="logo" href="index.html">GALERÍA</a>
@@ -23,8 +34,24 @@
     <section class="hero">
       <div class="hero-text">
         <p class="eyebrow">FOTOGRAFÍA · 2026</p>
-        <p class="eyebrow">Paloma Powell</p>
-        <p class="eyebrow">Jesus Itel Montenegro</p>
+        <div class="contact-person">
+          <p class="eyebrow">Paloma Powell</p>
+          <a class="contact-link" href="https://wa.me/543547630488" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp de Paloma Powell" title="WhatsApp">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.6 4.2 1.7 6L.2 24l6.4-1.7a11.8 11.8 0 0 0 5.5 1.4h.1c6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.5-8.4ZM12.1 21.7c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.8 1 1-3.7-.2-.4a9.8 9.8 0 1 1 8.1 4.6Zm5.4-7.3c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.7-1.7-2-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.6s1.1 3 1.3 3.2c.1.2 2.2 3.4 5.3 4.7.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.5Z"/></svg>
+          </a>
+          <a class="contact-link" href="https://www.instagram.com/palo_powell/" target="_blank" rel="noopener noreferrer" aria-label="Instagram de Paloma Powell" title="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle class="instagram-dot" cx="17.5" cy="6.8" r="1"/></svg>
+          </a>
+        </div>
+        <div class="contact-person">
+          <p class="eyebrow">Jesus Itel Montenegro</p>
+          <a class="contact-link" href="https://wa.me/543516420165" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp de Jesus Itel Montenegro" title="WhatsApp">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .3 5.3.3 11.8c0 2.1.6 4.2 1.7 6L.2 24l6.4-1.7a11.8 11.8 0 0 0 5.5 1.4h.1c6.5 0 11.8-5.3 11.8-11.8 0-3.2-1.2-6.1-3.5-8.4ZM12.1 21.7c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.8 1 1-3.7-.2-.4a9.8 9.8 0 1 1 8.1 4.6Zm5.4-7.3c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.7-1.7-2-.2-.3 0-.5.1-.6l.5-.6.3-.5c.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.6s1.1 3 1.3 3.2c.1.2 2.2 3.4 5.3 4.7.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.5Z"/></svg>
+          </a>
+          <a class="contact-link" href="https://www.instagram.com/jebuu_m/" target="_blank" rel="noopener noreferrer" aria-label="Instagram de Jesus Itel Montenegro" title="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle class="instagram-dot" cx="17.5" cy="6.8" r="1"/></svg>
+          </a>
+        </div>
         <h1>Algunos<br><em>instantes</em></h1>
         <p class="intro">
           Bienvenido a nuestra galería de fotografías.
@@ -35,6 +62,26 @@
       <div class="hero-image">
         <div class="hero-carousel" aria-label="Carrusel automático de fotos">
           <div class="hero-track"></div>
+        </div>
+        <div class="editing-app-credit">
+          <span class="editing-apps-label">Revelado con</span>
+          <div class="editing-apps" aria-label="Revelado con Adobe Lightroom y Snapseed">
+            <span class="editing-app" aria-label="Adobe Lightroom" title="Adobe Lightroom">
+              <svg class="editing-app-lightroom" viewBox="0 0 40 40" aria-hidden="true">
+                <rect x="2" y="2" width="36" height="36" rx="8"/>
+                <path d="M12 11v18h11v-3H16V11zm14 5v13h4v-8c1-1 2-1.5 4-1.5V16c-2 0-3.2.7-4 1.8V16z"/>
+              </svg>
+              <span>Lightroom</span>
+            </span>
+            <span class="editing-app" aria-label="Snapseed" title="Snapseed">
+              <svg class="editing-app-snapseed" viewBox="0 0 40 40" aria-hidden="true">
+                <rect x="2" y="2" width="36" height="36" rx="8"/>
+                <path d="M29 10c-9 1-16 6-17 14-.5 4 2 7 6 6 8-1 12-10 11-20Z"/>
+                <path d="M14 28c4-5 8-9 13-13"/>
+              </svg>
+              <span>Snapseed</span>
+            </span>
+          </div>
         </div>
       </div>
     </section>
@@ -95,32 +142,82 @@
       <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" required></label>
       <button class="button" type="submit">Entrar</button>
     </form>
-    <form id="upload-form" class="admin-form hidden">
-      <label>Temática existente
-        <select id="upload-category">
-          <option value="freestyle">Freestyle</option>
-          <option value="viajes">Viajes</option>
-        </select>
-      </label>
-      <label>Nueva temática (opcional)
-        <input id="new-category-name" type="text" placeholder="Ej. Montañas" maxlength="40">
-      </label>
-      <label>Fotos<input id="upload-files" type="file" accept="image/*" multiple required></label>
-      <div class="selected-files" id="selected-files"></div>
-      <button class="button" type="submit">Subir fotos</button>
-      <div class="photo-manager" id="photo-manager"></div>
-      <button class="admin-logout" type="button" id="logout-button">Cerrar sesión</button>
-    </form>
+    <div class="admin-dashboard hidden" id="admin-dashboard">
+      <section class="admin-statistics" id="admin-statistics" aria-labelledby="statistics-heading">
+        <div class="statistics-heading">
+          <div>
+            <h3 id="statistics-heading">Estadísticas</h3>
+            <p>Los likes son anónimos: solo se guarda el contador.</p>
+          </div>
+          <button class="statistics-refresh" id="statistics-refresh" type="button">Actualizar</button>
+        </div>
+        <div class="statistics-summary">
+          <article><strong id="statistics-likes">—</strong><span>Likes totales</span></article>
+          <article><strong id="statistics-photos">—</strong><span>Fotos</span></article>
+          <article><strong id="statistics-categories">—</strong><span>Temáticas</span></article>
+        </div>
+        <h4>Fotos más populares</h4>
+        <ol class="statistics-top-photos" id="statistics-top-photos"></ol>
+        <p class="statistics-status" id="statistics-status" role="status">Inicia sesión para consultar las estadísticas.</p>
+      </section>
+      <form id="upload-form" class="admin-form hidden">
+        <h3>Subir fotos</h3>
+        <label>Temática existente
+          <select id="upload-category">
+            <option value="freestyle" data-category="freestyle">Freestyle</option>
+            <option value="viajes" data-category="viajes">Viajes</option>
+          </select>
+        </label>
+        <label>Nueva temática (opcional)
+          <input id="new-category-name" type="text" placeholder="Ej. Montañas" maxlength="40">
+        </label>
+        <label>Fotos<input id="upload-files" type="file" accept="image/*" multiple required></label>
+        <div class="selected-files" id="selected-files"></div>
+        <button class="button" type="submit">Subir fotos</button>
+      </form>
+      <form id="edit-form" class="admin-form hidden">
+        <h3>Ver y modificar fotos</h3>
+        <label>Temática
+          <select id="edit-category">
+            <option value="freestyle" data-category="freestyle">Freestyle</option>
+            <option value="viajes" data-category="viajes">Viajes</option>
+          </select>
+        </label>
+        <div class="photo-manager" id="photo-manager"></div>
+        <button class="admin-logout" type="button" id="logout-button">Cerrar sesión</button>
+      </form>
+      <button class="save-all-changes" id="save-all-changes" type="button">Guardar todos los cambios</button>
+    </div>
     <p class="admin-status" id="admin-status" role="status"></p>
   </aside>
 
   <footer>
     <span>© 2026 Tu Galería</span>
+    <div class="editing-app-credit">
+      <span class="editing-apps-label">Herramientas de revelado</span>
+      <div class="editing-apps" aria-label="Adobe Lightroom y Snapseed">
+        <span class="editing-app" aria-label="Adobe Lightroom" title="Adobe Lightroom">
+          <svg class="editing-app-lightroom" viewBox="0 0 40 40" aria-hidden="true">
+            <rect x="2" y="2" width="36" height="36" rx="8"/>
+            <path d="M12 11v18h11v-3H16V11zm14 5v13h4v-8c1-1 2-1.5 4-1.5V16c-2 0-3.2.7-4 1.8V16z"/>
+          </svg>
+          <span>Adobe Lightroom</span>
+        </span>
+        <span class="editing-app" aria-label="Snapseed" title="Snapseed">
+          <svg class="editing-app-snapseed" viewBox="0 0 40 40" aria-hidden="true">
+            <rect x="2" y="2" width="36" height="36" rx="8"/>
+            <path d="M29 10c-9 1-16 6-17 14-.5 4 2 7 6 6 8-1 12-10 11-20Z"/>
+            <path d="M14 28c4-5 8-9 13-13"/>
+          </svg>
+          <span>Snapseed</span>
+        </span>
+      </div>
+    </div>
     <span>Fotografía</span>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js?v=20260912-13"></script>
-  <script src="js/app.js?v=20260912-15"></script>
+  <script src="js/app.js?v=20261019-45"></script>
 </body>
 </html>
