@@ -965,6 +965,7 @@ footer .editing-app svg { width: 22px; height: 22px; }
   .carousel-button { flex: 0 0 42px; width: 42px; height: 42px; }
 
   .photo-placeholder {
+    width: 100%;
     max-height: min(58vh, 410px);
     max-height: min(58svh, 410px);
     object-fit: contain;

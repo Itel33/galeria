@@ -1027,7 +1027,7 @@ async function renderCategory(categoryKey) {
 	heroTrack.innerHTML = "";
 	galleryTrack.innerHTML = category.photos.length ? category.photos.map((fileName, index) => {
 		return `<article class="photo-card">
-			<img class="photo-placeholder" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}">
+			<img class="photo-placeholder" src="${escapeHtml(imagePath(fileName))}" alt="Foto de ${escapeHtml(category.name)} ${index + 1}">
 			<div class="caption"><span>${String(index + 1).padStart(2, "0")}</span></div>
 		</article>`;
 	}).join("") : `<p class="empty-category">${categoryKey === MOST_LIKED_CATEGORY_KEY ? "Todavía no hay fotos con likes." : "Todavía no hay fotos en esta temática."}</p>`;
@@ -1040,7 +1040,7 @@ async function renderCategory(categoryKey) {
 	if (renderVersion !== categoryRenderVersion || currentCategory !== categoryKey) return;
 	heroGroups = nextHeroGroups;
 	const renderGroup = (group) => `<div class="hero-slide-group" data-count="${group.length}">${group.map((fileName, index) =>
-		`<div class="hero-slide-frame"><img class="hero-slide" src="${imagePath(fileName)}" alt="Foto de ${category.name} ${index + 1}"></div>`
+		`<div class="hero-slide-frame"><img class="hero-slide" src="${escapeHtml(imagePath(fileName))}" alt="Foto de ${escapeHtml(category.name)} ${index + 1}"></div>`
 	).join("")}</div>`;
 	heroTrack.innerHTML = heroGroups.map(renderGroup).join("") + renderGroup(heroGroups[0]);
 	currentHeroSlide = 0;
@@ -1203,6 +1203,16 @@ loginForm.addEventListener("submit", async (event) => {
 	});
 	if (error) {
 		adminStatus.textContent = error.message;
+		return;
+	}
+	const { data: isAdmin, error: adminCheckError } = await supabaseClient.rpc("is_gallery_admin");
+	if (adminCheckError || !isAdmin) {
+		const { error: signOutError } = await supabaseClient.auth.signOut();
+		if (adminCheckError) {
+			adminStatus.textContent = `No se pudieron verificar los permisos de administrador: ${adminCheckError.message}${signOutError ? ` No se pudo cerrar la sesión: ${signOutError.message}` : ""}`;
+		} else {
+			adminStatus.textContent = `Esta cuenta no está autorizada para administrar la galería.${signOutError ? ` No se pudo cerrar la sesión: ${signOutError.message}` : ""}`;
+		}
 		return;
 	}
 	loginForm.classList.add("hidden");

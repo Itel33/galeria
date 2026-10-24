@@ -49,29 +49,56 @@ alter table public.photos alter column category_order set not null;
 
 alter table public.photos enable row level security;
 
+create table if not exists public.gallery_admins (
+  user_id uuid primary key references auth.users(id) on delete cascade
+);
+
+alter table public.gallery_admins enable row level security;
+revoke all on table public.gallery_admins from public, anon, authenticated;
+
+create or replace function public.is_gallery_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.gallery_admins
+    where user_id = (select auth.uid())
+  );
+$$;
+
+revoke all on function public.is_gallery_admin() from public, anon;
+grant execute on function public.is_gallery_admin() to authenticated;
+
 drop policy if exists "Anyone can view photo records" on public.photos;
 create policy "Anyone can view photo records"
   on public.photos for select
   using (true);
 
 drop policy if exists "Authenticated users can add photo records" on public.photos;
-create policy "Authenticated users can add photo records"
+drop policy if exists "Gallery admins can add photo records" on public.photos;
+create policy "Gallery admins can add photo records"
   on public.photos for insert
   to authenticated
-  with check (true);
+  with check (public.is_gallery_admin());
 
 drop policy if exists "Authenticated users can edit photo records" on public.photos;
-create policy "Authenticated users can edit photo records"
+drop policy if exists "Gallery admins can edit photo records" on public.photos;
+create policy "Gallery admins can edit photo records"
   on public.photos for update
   to authenticated
-  using (true)
-  with check (true);
+  using (public.is_gallery_admin())
+  with check (public.is_gallery_admin());
 
 drop policy if exists "Authenticated users can delete photo records" on public.photos;
-create policy "Authenticated users can delete photo records"
+drop policy if exists "Gallery admins can delete photo records" on public.photos;
+create policy "Gallery admins can delete photo records"
   on public.photos for delete
   to authenticated
-  using (true);
+  using (public.is_gallery_admin());
 
 insert into storage.buckets (id, name, public)
 values ('gallery', 'gallery', true)
@@ -83,16 +110,24 @@ create policy "Anyone can view gallery images"
   using (bucket_id = 'gallery');
 
 drop policy if exists "Authenticated users can upload gallery images" on storage.objects;
-create policy "Authenticated users can upload gallery images"
+drop policy if exists "Gallery admins can upload gallery images" on storage.objects;
+create policy "Gallery admins can upload gallery images"
   on storage.objects for insert
   to authenticated
-  with check (bucket_id = 'gallery');
+  with check (bucket_id = 'gallery' and public.is_gallery_admin());
 
 drop policy if exists "Authenticated users can delete gallery images" on storage.objects;
-create policy "Authenticated users can delete gallery images"
+drop policy if exists "Gallery admins can delete gallery images" on storage.objects;
+create policy "Gallery admins can delete gallery images"
   on storage.objects for delete
   to authenticated
-  using (bucket_id = 'gallery');
+  using (bucket_id = 'gallery' and public.is_gallery_admin());
+
+-- After running this script, grant admin access to the account email used to sign in.
+-- Replace the email below with the administrator's Supabase Auth email and run it in the SQL Editor.
+-- insert into public.gallery_admins (user_id)
+-- select id from auth.users where email = 'your-email@example.com'
+-- on conflict (user_id) do nothing;
 
 create or replace function public.increment_photo_like(photo_id bigint)
 returns void
